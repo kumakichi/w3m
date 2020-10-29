@@ -443,7 +443,7 @@ save_cookies(void)
 	return;
 
     for (p = First_cookie; p; p = p->next) {
-	if (!(p->flag & COO_USE) || p->flag & COO_DISCARD)
+	if (!(p->flag & COO_USE) || p->flag & COO_DISCARD || p->dont_write == DONT_WRITE)
 	    continue;
 	fprintf(fp, "%s\t%s\t%s\t%ld\t%s\t%s\t%d\t%d\t%s\t%s\t%s\n",
 		parsedURL2Str(&p->url)->ptr,
@@ -494,6 +494,7 @@ load_cookies(void)
 	cookie = New(struct cookie);
 	cookie->next = NULL;
 	cookie->flag = 0;
+	cookie->dont_write = 0;
 	cookie->version = 0;
 	cookie->expires = (time_t) - 1;
 	cookie->comment = NULL;
@@ -546,9 +547,88 @@ load_cookies(void)
 }
 
 void
+load_ext_cookies(char *path)
+{
+    struct cookie *cookie, *p;
+    FILE *fp;
+    Str line;
+    char *str;
+
+    if (!(fp = fopen(path, "r")))
+	return;
+
+    if (First_cookie) {
+	for (p = First_cookie; p->next; p = p->next) ;
+    }
+    else {
+	p = NULL;
+    }
+    for (;;) {
+	line = Strfgets(fp);
+
+	if (line->length == 0)
+	    break;
+	str = line->ptr;
+	cookie = New(struct cookie);
+	cookie->next = NULL;
+	cookie->flag = 0;
+	cookie->version = 0;
+	cookie->dont_write = DONT_WRITE;
+	cookie->expires = (time_t) - 1;
+	cookie->comment = NULL;
+	cookie->portl = NULL;
+	cookie->commentURL = NULL;
+
+    //////////////////
+	Str tmp;
+	cookie->domain = readcol(&str);
+	if (!*str)
+	    return;
+
+	tmp = readcol(&str);
+
+	cookie->path = readcol(&str);
+	if (!*str)
+	    return;
+
+	tmp = readcol(&str);
+    if(strncmp(tmp->ptr, "FALSE", tmp->length) == 0)
+        cookie->flag = COO_USE | COO_PATH | COO_DOMAIN;
+    else
+        cookie->flag = COO_USE | COO_SECURE | COO_PATH | COO_DOMAIN;
+
+	cookie->expires = (time_t) atol(readcol(&str)->ptr);
+	if (!*str)
+	    return;
+
+	cookie->name = readcol(&str);
+	if (!*str)
+	    return;
+
+	cookie->value = readcol(&str);
+	if (!*str)
+	    return;
+    //    printf("%s --- %s\n", cookie->name->ptr, cookie->value->ptr);
+    //////////////////
+
+	if (p)
+	    p->next = cookie;
+	else
+	    First_cookie = cookie;
+	p = cookie;
+    }
+
+    fclose(fp);
+}
+
+void
 initCookie(void)
 {
-    load_cookies();
+    if (ExtCookieFile == NULL) {
+        load_cookies();
+    } else {
+        load_ext_cookies(ExtCookieFile);
+    }
     check_expired_cookies();
 }
 

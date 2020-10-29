@@ -735,8 +735,11 @@ struct cookie {
     struct portlist *portl;
     char version;
     char flag;
+    char dont_write;
     struct cookie *next;
 };
+#define DONT_WRITE  0x33
+
 #define COO_USE		1
 #define COO_SECURE	2
 #define COO_DOMAIN	4
@@ -1015,6 +1018,7 @@ global int do_download init(FALSE);
 global char *image_source init(NULL);
 #endif
 global char *UserAgent init(NULL);
+global char *ExtCookieFile init(NULL);
 global int NoSendReferer init(FALSE);
 global char *AcceptLang init(NULL);
 global char *AcceptEncoding init(NULL);

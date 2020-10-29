@@ -265,6 +265,10 @@ fusage(FILE * f, int err)
     fprintf(f, "    -X               don't use termcap init/deinit\n");
     fprintf(f,
 	    "    -title[=TERM]    set buffer name to terminal title string\n");
+    fprintf(f,
+	    "    -user-agent=STR    set user-agent to STR\n");
+    fprintf(f,
+	    "    -load-cookies=file    load cookies from file\n");
     fprintf(f, "    -o opt=value     assign value to config option\n");
     fprintf(f, "    -show-option     print all config options\n");
     fprintf(f, "    -config file     specify config file\n");
@@ -756,6 +760,14 @@ main(int argc, char **argv, char **envp)
 		displayTitleTerm = getenv("TERM");
 	    else if (!strncmp("-title=", argv[i], 7))
 		displayTitleTerm = argv[i] + 7;
+	    else if (!strncmp("-user-agent=", argv[i], 12)) {
+		UserAgent = argv[i] + 12;
+		argv[i][strlen(argv[i])] = 0;/* remove the last '"' */
+		}
+	    else if (!strncmp("-load-cookies=", argv[i], 14)) {
+        ExtCookieFile = argv[i] + 14;
+		argv[i][strlen(argv[i])] = 0;/* remove the last '"' */
+		}
 	    else if (!strcmp("-o", argv[i]) ||
 		     !strcmp("-show-option", argv[i])) {
 		if (!strcmp("-show-option", argv[i]) || ++i >= argc ||
